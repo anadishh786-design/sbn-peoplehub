@@ -18,7 +18,7 @@ Use one employee row per person. In SQLite, the proposed fields are:
 | Joining date | `joining_date TEXT NOT NULL` | ISO date `YYYY-MM-DD`. |
 | Active status | `is_active INTEGER NOT NULL` | Boolean stored as 1 (active) or 0 (inactive). |
 
-Department, designation, and process describe different things. For example, **Anadish Rao** can be an **Operations Manager** (designation) in **Operations** (department), assigned to the **Customer Operations** process (work assignment).
+Department, designation, and process describe different things. For example, **Neha** can be an **Operations Manager** (designation) in **Operations** (department), assigned to the **Customer Operations** process (work assignment).
 
 Employee ID identifies the person and should remain stable if their name, job, department, or assignment changes. A manager reference uses that ID, so reporting links do not depend on names or titles.
 
@@ -28,14 +28,14 @@ All people and details below are invented. Addresses use `example.com`.
 
 | Employee ID | Full name | Designation | Department | Process / assignment | Reporting manager | Work email | Joining date | Status |
 |---|---|---|---|---|---|---|---|---|
-| SBN-1001 | Sahil Mehta | Department Head | Technology | Technology Leadership | — (no manager recorded) | sahil.mehta@example.com | 2020-04-06 | Active |
-| SBN-1002 | Sonam Iyer | Team Manager | Technology | Platform Support | SBN-1001 — Sahil Mehta | sonam.iyer@example.com | 2021-08-16 | Active |
-| SBN-1003 | Sohil Kapoor | Support Analyst | Technology | Platform Support | SBN-1002 — Sonam Iyer | sohil.kapoor@example.com | 2023-02-13 | Active |
-| SBN-1004 | Sohil Kapoor | Systems Analyst | Technology | Access Operations | SBN-1002 — Sonam Iyer | sohil.kapoor2@example.com | 2024-06-03 | Active |
-| SBN-2001 | Anadish Rao | Operations Manager | Operations | Customer Operations | SBN-1001 — Sahil Mehta | anadish.rao@example.com | 2020-11-09 | Active |
-| SBN-2002 | Romaan Eeolace | Operations Associate | Operations | Customer Onboarding | SBN-2001 — Anadish Rao | romaan.eeolace@example.com | 2022-05-23 | Inactive |
+| SBN-1001 | Amit Yadav | Department Head | Technology | Technology Leadership | — (no manager recorded) | amit.yadav@example.com | 2020-04-06 | Active |
+| SBN-1002 | Darshit Pandey | Team Manager | Technology | Platform Support | SBN-1001 — Amit Yadav | darshit.pandey@example.com | 2021-08-16 | Active |
+| SBN-1003 | Asha | Support Analyst | Technology | Platform Support | SBN-1002 — Darshit Pandey | asha@example.com | 2023-02-13 | Active |
+| SBN-1004 | Asha | Systems Analyst | Technology | Access Operations | SBN-1002 — Darshit Pandey | asha2@example.com | 2024-06-03 | Active |
+| SBN-2001 | Neha | Operations Manager | Operations | Customer Operations | SBN-1001 — Amit Yadav | neha@example.com | 2020-11-09 | Active |
+| SBN-2002 | Prakash Singh | Operations Associate | Operations | Customer Onboarding | SBN-2001 — Neha | prakash.singh@example.com | 2022-05-23 | Inactive |
 
-SBN-1002 has two direct reports (SBN-1003 and SBN-1004). SBN-1001 has no reporting manager recorded. Sohil Kapoor appears twice with different employee IDs and different work emails. SBN-2002 is inactive.
+SBN-1002 has two direct reports (SBN-1003 and SBN-1004). SBN-1001 has no reporting manager recorded. Asha appears twice with different employee IDs and different work emails. SBN-2002 is inactive.
 
 ## 3. Screen sketches
 
@@ -48,9 +48,9 @@ SBN-1002 has two direct reports (SBN-1003 and SBN-1004). SBN-1001 has no reporti
 | Search by ID or name [________________________] Department [All v]  |
 |                                                                     |
 | ID        Name          Designation       Department   Status        |
-| SBN-1001  Sahil Mehta     Department Head   Technology   Active        |
-| SBN-1002  Sonam Iyer     Team Manager      Technology   Active        |
-| SBN-1003  Sohil Kapoor   Support Analyst   Technology   Active        |
+| SBN-1001  Amit Yadav     Department Head   Technology   Active        |
+| SBN-1002  Darshit Pandey     Team Manager      Technology   Active        |
+| SBN-1003  Asha   Support Analyst   Technology   Active        |
 | ...                                                                 |
 | [Select a row to open the employee profile]                         |
 +---------------------------------------------------------------------+
@@ -62,16 +62,16 @@ SBN-1002 has two direct reports (SBN-1003 and SBN-1004). SBN-1001 has no reporti
 +----------------------------------------------------------+
 | SBN PeopleHub                         Directory | Org    |
 +----------------------------------------------------------+
-| Sohil Kapoor                              [Active]        |
+| Asha                              [Active]        |
 | Employee ID: SBN-1003                                    |
 | Designation: Support Analyst                             |
 | Department: Technology                                   |
 | Process: Platform Support                               |
-| Work email: sohil.kapoor@example.com                      |
+| Work email: asha@example.com                      |
 | Joining date: 2023-02-13                                 |
 |                                                          |
 | Reporting manager                                        |
-| Sonam Iyer — SBN-1002 — Team Manager                      |
+| Darshit Pandey — SBN-1002 — Team Manager                      |
 | [Open manager profile]                                   |
 +----------------------------------------------------------+
 ```
@@ -82,12 +82,12 @@ SBN-1002 has two direct reports (SBN-1003 and SBN-1004). SBN-1001 has no reporti
 +----------------------------------------------------------+
 | SBN PeopleHub                    Directory | Organisation|
 +----------------------------------------------------------+
-| Sahil Mehta (SBN-1001) — Department Head                   |
-|   +-- Sonam Iyer (SBN-1002) — Team Manager                |
-|   |     +-- Sohil Kapoor (SBN-1003) — Support Analyst     |
-|   |     +-- Sohil Kapoor (SBN-1004) — Systems Analyst     |
-|   +-- Anadish Rao (SBN-2001) — Operations Manager          |
-|         +-- Romaan Eeolace (SBN-2002) — Operations Associate  |
+| Amit Yadav (SBN-1001) — Department Head                   |
+|   +-- Darshit Pandey (SBN-1002) — Team Manager                |
+|   |     +-- Asha (SBN-1003) — Support Analyst     |
+|   |     +-- Asha (SBN-1004) — Systems Analyst     |
+|   +-- Neha (SBN-2001) — Operations Manager          |
+|         +-- Prakash Singh (SBN-2002) — Operations Associate  |
 +----------------------------------------------------------+
 ```
 
