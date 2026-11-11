@@ -76,15 +76,16 @@ def add_employee(employee_id, first_name, last_name, email, department, designat
 
 
 def search_employee(employee_id, db_path=None):
-    if employee_id is None or not str(employee_id).strip():
+    try:
+        normalized_employee_id = validation.validate_employee_id(employee_id)
+    except ValueError:
         return None
 
-    query_id = str(employee_id).strip().upper()
     connection = get_connection(db_path)
     try:
         row = connection.execute(
             "SELECT * FROM employees WHERE employee_id = ?",
-            (query_id,),
+            (normalized_employee_id,),
         ).fetchone()
         if row is None:
             return None
@@ -105,10 +106,10 @@ def view_all_employees(db_path=None):
 
 
 def update_employee(employee_id, first_name=None, last_name=None, email=None, department=None, designation=None, db_path=None):
-    if employee_id is None or not str(employee_id).strip():
-        return False, "Error: Employee ID is required."
-
-    normalized_employee_id = str(employee_id).strip().upper()
+    try:
+        normalized_employee_id = validation.validate_employee_id(employee_id)
+    except ValueError as exc:
+        return False, str(exc)
 
     connection = get_connection(db_path)
     try:
@@ -120,24 +121,27 @@ def update_employee(employee_id, first_name=None, last_name=None, email=None, de
             return False, "Error: Employee not found."
 
         update_values = {}
-        if first_name is not None:
-            update_values["first_name"] = validation.validate_text(first_name, "First name")
-        if last_name is not None:
-            update_values["last_name"] = validation.validate_text(last_name, "Last name")
-        if email is not None:
-            cleaned_email = validation.validate_email(email)
-            if cleaned_email.lower() != existing_employee["email"].lower():
-                duplicate_email = connection.execute(
-                    "SELECT 1 FROM employees WHERE LOWER(email) = LOWER(?) AND employee_id != ?",
-                    (cleaned_email, normalized_employee_id),
-                ).fetchone()
-                if duplicate_email is not None:
-                    return False, "Error: Email already exists."
-            update_values["email"] = cleaned_email
-        if department is not None:
-            update_values["department"] = validation.validate_text(department, "Department")
-        if designation is not None:
-            update_values["designation"] = validation.validate_text(designation, "Designation")
+        try:
+            if first_name is not None:
+                update_values["first_name"] = validation.validate_text(first_name, "First name")
+            if last_name is not None:
+                update_values["last_name"] = validation.validate_text(last_name, "Last name")
+            if email is not None:
+                cleaned_email = validation.validate_email(email)
+                if cleaned_email.lower() != existing_employee["email"].lower():
+                    duplicate_email = connection.execute(
+                        "SELECT 1 FROM employees WHERE LOWER(email) = LOWER(?) AND employee_id != ?",
+                        (cleaned_email, normalized_employee_id),
+                    ).fetchone()
+                    if duplicate_email is not None:
+                        return False, "Error: Email already exists."
+                update_values["email"] = cleaned_email
+            if department is not None:
+                update_values["department"] = validation.validate_text(department, "Department")
+            if designation is not None:
+                update_values["designation"] = validation.validate_text(designation, "Designation")
+        except ValueError as exc:
+            return False, str(exc)
 
         if not update_values:
             return False, "Error: No changes supplied."
@@ -157,17 +161,9 @@ def update_employee(employee_id, first_name=None, last_name=None, email=None, de
 
 
 def assign_manager(employee_id, manager_id, db_path=None):
-    if employee_id is None or not str(employee_id).strip():
-        return False, "Error: Employee ID is required."
-    if manager_id is None or not str(manager_id).strip():
-        return False, "Error: Manager ID is required."
-
-    normalized_employee_id = str(employee_id).strip().upper()
-    normalized_manager_id = str(manager_id).strip().upper()
-
     try:
-        validation.validate_employee_id(normalized_employee_id)
-        validation.validate_employee_id(normalized_manager_id)
+        normalized_employee_id = validation.validate_employee_id(employee_id)
+        normalized_manager_id = validation.validate_employee_id(manager_id)
     except ValueError as exc:
         return False, str(exc)
 
@@ -195,10 +191,10 @@ def assign_manager(employee_id, manager_id, db_path=None):
 
 
 def deactivate_employee(employee_id, db_path=None):
-    if employee_id is None or not str(employee_id).strip():
-        return False, "Error: Employee ID is required."
-
-    normalized_employee_id = str(employee_id).strip().upper()
+    try:
+        normalized_employee_id = validation.validate_employee_id(employee_id)
+    except ValueError as exc:
+        return False, str(exc)
 
     connection = get_connection(db_path)
     try:

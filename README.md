@@ -2,6 +2,12 @@
 
 SBN PeopleHub is a simple command-line employee directory built with Python and SQLite. This module focuses on the employee data model, reporting relationships, validation, and inactive employee handling.
 
+## Current implementation and future plans
+
+The current application is a command-line program written in Python. It uses Python's standard library and SQLite for local data storage; it does not currently use a web framework, a web interface, or an authentication platform.
+
+The separate planning document describes possible future capabilities, including a browser-based directory, organisation views, authentication, role-based access, and audit history. These are proposals only. No future web framework, database server, or identity technology has been selected or implemented.
+
 ## Features
 
 - Create and persist employee records in SQLite.

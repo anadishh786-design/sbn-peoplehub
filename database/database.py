@@ -69,10 +69,6 @@ def seed_demo_employees(db_path=None):
     target_path = db_path or get_database_path()
     connection = get_connection(target_path)
     try:
-        existing_count = connection.execute("SELECT COUNT(*) FROM employees").fetchone()[0]
-        if existing_count > 0:
-            return 0
-
         timestamp = get_current_timestamp()
         sample_employees = [
             ("SBN001", "Arjun", "Mehta", "arjun.mehta@example.com", "Management", "Department Head", None, "Active", timestamp, timestamp),
@@ -83,6 +79,29 @@ def seed_demo_employees(db_path=None):
             ("SBN006", "Aman", "Khan", "aman.khan@example.com", "Operations", "Operations Analyst", "SBN001", "Active", timestamp, timestamp),
         ]
 
+        connection.execute("BEGIN IMMEDIATE")
+        existing_count = connection.execute("SELECT COUNT(*) FROM employees").fetchone()[0]
+        expected_by_id = {employee[0]: employee for employee in sample_employees}
+        existing_samples = connection.execute(
+            "SELECT * FROM employees WHERE employee_id IN (?, ?, ?, ?, ?, ?)",
+            tuple(expected_by_id),
+        ).fetchall()
+
+        if existing_count > 0 and not existing_samples:
+            connection.rollback()
+            return 0
+
+        for existing in existing_samples:
+            expected = expected_by_id[existing["employee_id"]]
+            if tuple(existing[key] for key in (
+                "employee_id", "first_name", "last_name", "email", "department",
+                "designation", "manager_id", "status",
+            )) != expected[:8]:
+                connection.rollback()
+                return 0
+
+        existing_ids = {row["employee_id"] for row in existing_samples}
+        missing_employees = [employee for employee in sample_employees if employee[0] not in existing_ids]
         connection.executemany(
             """
             INSERT INTO employees (
@@ -98,9 +117,12 @@ def seed_demo_employees(db_path=None):
                 updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            sample_employees,
+            missing_employees,
         )
         connection.commit()
-        return len(sample_employees)
+        return len(missing_employees)
+    except Exception:
+        connection.rollback()
+        raise
     finally:
         connection.close()
