@@ -45,3 +45,5 @@ The schema uses SQLite foreign keys and enforces a `CHECK` constraint for valid 
 ## Sample data
 
 The application seeds six fictional employee records on first run so the directory can be explored immediately. The seed data includes repeated first names, multiple departments, and a reporting hierarchy that demonstrates manager validation and inactive employee safeguards.
+
+Seeding is transactional: a failed insert rolls back the batch, and a later startup can try again. If only some unchanged sample rows exist, seeding adds the missing rows. If any existing sample ID has been edited, the seeder does not overwrite it or add the remaining samples; it leaves the database unchanged so user data is not silently replaced. Review or repair that sample data explicitly before reseeding.
