@@ -1,7 +1,13 @@
 import os
 import sqlite3
+import sys
 import tempfile
 import unittest
+from pathlib import Path
+
+project_root = str(Path(__file__).resolve().parents[1])
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from database.database import get_connection, initialize_database, seed_demo_employees
 from services.employee_service import (
