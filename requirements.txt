@@ -1,0 +1,2 @@
+# No external libraries are required for this project.
+# This module uses the Python standard library and SQLite.
