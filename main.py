@@ -74,17 +74,21 @@ def main():
 
         elif choice == "3":
             employee_id = input("Enter Employee ID: ").strip()
-            employee = search_employee(employee_id)
-            if employee is None:
-                print("Employee not found.")
+            try:
+                employee = search_employee(employee_id)
+            except ValueError as exc:
+                print(exc)
             else:
-                print("Employee Details")
-                print(f"Employee ID: {employee['employee_id']}")
-                print(f"Name: {employee['first_name']} {employee['last_name']}")
-                print(f"Department: {employee['department']}")
-                print(f"Designation: {employee['designation']}")
-                print(f"Manager ID: {employee['manager_id'] if employee['manager_id'] else 'None'}")
-                print(f"Status: {employee['status']}")
+                if employee is None:
+                    print("Employee not found.")
+                else:
+                    print("Employee Details")
+                    print(f"Employee ID: {employee['employee_id']}")
+                    print(f"Name: {employee['first_name']} {employee['last_name']}")
+                    print(f"Department: {employee['department']}")
+                    print(f"Designation: {employee['designation']}")
+                    print(f"Manager ID: {employee['manager_id'] if employee['manager_id'] else 'None'}")
+                    print(f"Status: {employee['status']}")
 
         elif choice == "4":
             employee_id = input("Enter Employee ID: ").strip()

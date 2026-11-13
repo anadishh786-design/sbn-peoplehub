@@ -18,7 +18,6 @@ from services.employee_service import (
     update_employee,
 )
 
-
 class EmployeeServiceTests(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -51,6 +50,23 @@ class EmployeeServiceTests(unittest.TestCase):
         self.assertTrue(success)
         self.assertIn("Employee added successfully", message)
         self.assertEqual(search_employee("SBN007", self.db_path)["first_name"], "Ishita")
+
+    def test_add_normalizes_whitespace_and_mixed_case_employee_and_manager_ids(self):
+        success, message = add_employee(
+            "  sBn007  ",
+            "Ishita",
+            "Khan",
+            "ishita.khan@example.com",
+            "Operations",
+            "Operations Analyst",
+            "  sBn001  ",
+            db_path=self.db_path,
+        )
+
+        self.assertTrue(success, message)
+        employee = search_employee("SBN007", self.db_path)
+        self.assertEqual(employee["employee_id"], "SBN007")
+        self.assertEqual(employee["manager_id"], "SBN001")
 
     def test_add_duplicate_employee_id_rejected(self):
         success, message = add_employee(
@@ -92,6 +108,10 @@ class EmployeeServiceTests(unittest.TestCase):
         self.assertIsNotNone(employee)
         self.assertEqual(employee["employee_id"], "SBN003")
 
+    def test_search_invalid_employee_id_raises_value_error(self):
+        with self.assertRaisesRegex(ValueError, "must start with SBN followed by one or more digits"):
+            search_employee("employee-1", self.db_path)
+
     def test_search_missing_employee_returns_none(self):
         employee = search_employee("SBN999", self.db_path)
         self.assertIsNone(employee)
@@ -119,6 +139,23 @@ class EmployeeServiceTests(unittest.TestCase):
 
         self.assertTrue(success, message)
         self.assertEqual(search_employee("SBN002", self.db_path)["department"], "Finance Operations")
+
+    def test_update_accepts_employee_id_with_more_than_three_digits(self):
+        success, message = add_employee(
+            "SBN1000",
+            "Long",
+            "Identifier",
+            "long.identifier@example.com",
+            "Operations",
+            "Analyst",
+            db_path=self.db_path,
+        )
+        self.assertTrue(success, message)
+
+        success, message = update_employee("  sBn1000  ", department="Leadership", db_path=self.db_path)
+
+        self.assertTrue(success, message)
+        self.assertEqual(search_employee("SBN1000", self.db_path)["department"], "Leadership")
 
     def test_update_invalid_email_is_rejected_without_changes(self):
         before = self.database_snapshot()
@@ -161,22 +198,26 @@ class EmployeeServiceTests(unittest.TestCase):
         self.assertEqual(self.database_snapshot(), before)
 
     def test_employee_operations_reject_invalid_id_format(self):
-        self.assertIsNone(search_employee("employee-1", self.db_path))
-
         success, message = update_employee("employee-1", first_name="New", db_path=self.db_path)
 
         self.assertFalse(success)
-        self.assertIn("Employee ID must use the format", message)
+        self.assertIn("Employee ID must start with SBN followed by one or more digits", message)
 
         success, message = deactivate_employee("employee-1", db_path=self.db_path)
 
         self.assertFalse(success)
-        self.assertIn("Employee ID must use the format", message)
+        self.assertIn("Employee ID must start with SBN followed by one or more digits", message)
 
     def test_assign_valid_manager(self):
         success, message = assign_manager("SBN004", "SBN003", db_path=self.db_path)
         self.assertTrue(success)
         self.assertIn("Manager assigned successfully", message)
+        self.assertEqual(search_employee("SBN004", self.db_path)["manager_id"], "SBN003")
+
+    def test_assign_manager_normalizes_whitespace_and_mixed_case_ids(self):
+        success, message = assign_manager("  sBn004  ", "  sBn003  ", db_path=self.db_path)
+
+        self.assertTrue(success, message)
         self.assertEqual(search_employee("SBN004", self.db_path)["manager_id"], "SBN003")
 
     def test_assign_nonexistent_manager_rejected(self):
@@ -285,6 +326,38 @@ class EmployeeServiceTests(unittest.TestCase):
 
         self.assertEqual(inserted_count, 5)
         self.assertEqual(len(self.database_snapshot()), 6)
+
+    def test_seed_recovers_missing_samples_without_changing_manual_employee(self):
+        connection = get_connection(self.db_path)
+        try:
+            connection.execute("DELETE FROM employees WHERE employee_id IN ('SBN005', 'SBN006')")
+            connection.execute(
+                """
+                INSERT INTO employees (
+                    employee_id, first_name, last_name, email, department,
+                    designation, manager_id, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "SBN900", "Manual", "Employee", "manual@example.com", "Custom",
+                    "Custom Role", "SBN001", "Active", "2026-01-01 00:00:00", "2026-01-01 00:00:00",
+                ),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+        manual_employee_before = next(
+            row for row in self.database_snapshot() if row["employee_id"] == "SBN900"
+        )
+        inserted_count = seed_demo_employees(self.db_path)
+
+        self.assertEqual(inserted_count, 2)
+        self.assertEqual(len(self.database_snapshot()), 7)
+        manual_employee_after = next(
+            row for row in self.database_snapshot() if row["employee_id"] == "SBN900"
+        )
+        self.assertEqual(manual_employee_after, manual_employee_before)
 
     def test_failed_seed_rolls_back_all_inserted_rows(self):
         partial_seed_path = os.path.join(self.temp_dir.name, "partial_seed.db")

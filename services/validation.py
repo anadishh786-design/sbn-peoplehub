@@ -7,7 +7,7 @@ def validate_employee_id(employee_id):
 
     normalized_id = str(employee_id).strip().upper()
     if not re.fullmatch(r"SBN\d+", normalized_id):
-        raise ValueError("Employee ID must use the format SBN###.")
+        raise ValueError("Employee ID must start with SBN followed by one or more digits (for example, SBN001).")
 
     return normalized_id
 

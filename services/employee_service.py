@@ -76,10 +76,7 @@ def add_employee(employee_id, first_name, last_name, email, department, designat
 
 
 def search_employee(employee_id, db_path=None):
-    try:
-        normalized_employee_id = validation.validate_employee_id(employee_id)
-    except ValueError:
-        return None
+    normalized_employee_id = validation.validate_employee_id(employee_id)
 
     connection = get_connection(db_path)
     try:
